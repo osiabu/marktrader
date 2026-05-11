@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Marktrader">
+  <title>Marktrader</title>
+  <line x1="6"  y1="26" x2="58" y2="26" stroke="#F0B429" stroke-width="4" stroke-linecap="round"/>
+  <line x1="14" y1="40" x2="58" y2="40" stroke="#00C9B1" stroke-width="4" stroke-linecap="round"/>
+</svg>

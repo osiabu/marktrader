@@ -1,0 +1,23 @@
+.claude/
+.vercel
+.env*.local
+
+# Local debug screenshots, not shipped
+issues/
+
+# Local-only Claude Code rules, never publish
+CLAUDE.md
+
+# Local-only planning docs, never publish
+changes.txt
+# Per Julius's 2026-05-10 rule (tightened, then amended for README):
+# all .md and all .txt stay local across every project, EXCEPT
+# README.md which is the one approved global exception. Other
+# exceptions require explicit per-file approval from Julius.
+*.md
+*.txt
+!README.md
+# Internal HTML artefacts (mocks, prototypes, infographics) also stay local.
+*-infographic.html
+*-mock.html
+*-prototype.html

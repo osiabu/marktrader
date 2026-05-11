@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Marktrader Academy">
+<title>Marktrader · Trader Training Platform</title>
+<link rel="icon" type="image/svg+xml" href="img/marktrader-mark.svg">
+<link rel="alternate icon" type="image/png" sizes="32x32" href="img/marktrader-mark-256.png">
+<link rel="shortcut icon" type="image/svg+xml" href="img/marktrader-mark.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="img/marktrader-mark-256.png">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Marktrader · Trader Training Platform">
+<meta property="og:description" content="Marktrader is a market intelligence console for traders. Lumen scans the tape, you keep the wheel.">
+<meta property="og:image" content="img/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Marktrader · Trader Training Platform">
+<meta name="twitter:description" content="Marktrader is a market intelligence console for traders. Lumen scans the tape, you keep the wheel.">
+<meta name="twitter:image" content="img/og-card.png">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/academy.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/chart.css">
+<link rel="stylesheet" href="css/autotrader.css">
+<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="css/responsive.css">
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     SETUP / ONBOARDING
+═══════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- TOP BAR (hidden, info moved to sidebar) -->
+  <div class="desktop-topbar" style="display:none;" aria-hidden="true"></div>
+
+  <!-- MOBILE TOP BAR -->
+  <div class="mobile-topbar">
+    <div class="mobile-topbar-brand" onclick="navigate('home',null)">
+      <img src="img/marktrader-lockup.svg" alt="Marktrader" class="wm-logo-img-mobile">
+    </div>
+    <div class="mobile-topbar-meta">
+      <div id="mobile-clock" class="mobile-topbar-clock"></div>
+      <div id="trial-badge" class="mobile-topbar-badge" style="display:none;" onclick="navigate('settings',null)"></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR (tablet + desktop) -->
+  <div class="sidebar">
+    <div class="sidebar-brand" style="cursor:pointer;" onclick="navigate('home',null)">
+      <img src="img/marktrader-mark.svg" alt="Marktrader" class="wm-logo-img">
+      <div class="sidebar-brand-name">Marktrader</div>
+    </div>
+
+    <!-- Session badge -->
+    <div class="session-badge" id="sidebar-session-badge">
+      <div class="session-dot session-open" id="session-dot" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;"></div>
+      <span class="session-badge-text" id="session-label">London Open</span>
+      <span class="session-badge-time" id="clock-time">--:--</span>
+    </div>
+
+    <button class="nav-item" onclick="navigate('home',this)"><img src="icons/icon-home.svg" class="nav-icon" alt="">Home</button>
+    <button class="nav-item" onclick="navigate('academy',this)"><img src="icons/icon-academy.svg" class="nav-icon" alt="">Trading Academy</button>
+    <button class="nav-item" onclick="navigate('simtrader',this)"><img src="icons/icon-sim.svg" class="nav-icon" alt="">Sim Trader</button>
+    <button class="nav-item" onclick="navigate('autotrader',this)"><img src="icons/icon-lumen.svg" class="nav-icon" alt="">Lumen</button>
+    <button class="nav-item" onclick="navigate('markets',this)"><img src="icons/icon-markets.svg" class="nav-icon" alt="">Markets</button>
+
+    <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;">
+      <button class="nav-item" onclick="navigate('settings',this)"><img src="icons/icon-settings.svg" class="nav-icon" alt="">Settings</button>
+      <button class="nav-item" onclick="openLegalModal('privacy')"><img src="icons/icon-privacy.svg" class="nav-icon" alt="">Privacy</button>
+      <button class="nav-item" onclick="openLegalModal('terms')"><img src="icons/icon-terms.svg" class="nav-icon" alt="">Terms</button>
+      <a href="https://pay.sumup.com/b2c/QHXZ6NHB" target="_blank" rel="noopener"
+         style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;color:var(--text2);font-family:var(--font-mono);font-size:9px;letter-spacing:0.5px;text-decoration:none;transition:all 0.2s;cursor:pointer;margin-top:6px;"
+         onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+         onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
+        Support Marktrader
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div id="tab-panels"></div>
+  </div><!-- /main-content -->
+
+  <!-- RIGHT PANEL (desktop only) -->
+  <div class="right-panel" id="right-panel">
+
+    <!-- Account Summary — pulled from Sim Trader -->
+    <div class="rp-section">
+      <div class="rp-title">Sim Account</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:4px;">BALANCE</div>
+        <div id="sidebar-balance" style="font-family:'Inter',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.04em;color:var(--green);line-height:1;">—</div>
+        <div id="rp-sim-equity-row" style="font-family:var(--font-mono);font-size:9px;color:var(--text3);margin-top:3px;">Equity: <span id="rp-sim-equity">—</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+        <div style="background:var(--bg2);border-radius:7px;padding:8px;text-align:center;">
+          <div id="sidebar-winrate" style="font-family:'Inter',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.03em;color:var(--green);">0%</div>
+          <div style="font-family:var(--font-mono);font-size:7px;color:var(--text3);margin-top:2px;">WIN RATE</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:7px;padding:8px;text-align:center;">
+          <div id="sidebar-trades" style="font-family:'Inter',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.03em;color:var(--text);">0</div>
+          <div style="font-family:var(--font-mono);font-size:7px;color:var(--text3);margin-top:2px;">TRADES</div>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border-radius:7px;padding:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:var(--font-mono);font-size:8px;color:var(--text3);">OPEN P&L</span>
+          <span id="rp-sim-open-pnl" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:-0.02em;color:var(--text);">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <span style="font-family:var(--font-mono);font-size:8px;color:var(--text3);">TOTAL P&L</span>
+          <span id="rp-sim-total-pnl" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:-0.02em;color:var(--text);">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Risk Snapshot — from sim account -->
+    <div class="rp-section">
+      <div class="rp-title">Risk Snapshot</div>
+      <div class="rp-stat-grid">
+        <div class="rp-stat">
+          <div class="rp-stat-label">SIM BALANCE</div>
+          <div id="rp-balance" class="rp-stat-val" style="color:var(--green);font-family:'Inter',sans-serif;letter-spacing:-0.03em;">—</div>
+        </div>
+        <div class="rp-stat">
+          <div class="rp-stat-label">MAX RISK / TRADE (2%)</div>
+          <div id="rp-risk-amt" class="rp-stat-val" style="color:var(--gold);font-family:'Inter',sans-serif;letter-spacing:-0.03em;">—</div>
+        </div>
+        <div class="rp-stat">
+          <div class="rp-stat-label">DAILY LIMIT (5%)</div>
+          <div id="rp-daily-limit" class="rp-stat-val" style="color:var(--text);font-family:'Inter',sans-serif;letter-spacing:-0.03em;">—</div>
+        </div>
+        <div class="rp-stat">
+          <div class="rp-stat-label">OPEN POSITIONS</div>
+          <div id="rp-lot-size" class="rp-stat-val" style="color:var(--blue);font-family:'Inter',sans-serif;letter-spacing:-0.03em;">0</div>
+        </div>
+      </div>
+      <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:6px;">
+        <div id="rp-limit-bar" style="height:100%;width:0%;background:var(--green);border-radius:3px;transition:width 0.3s,background 0.3s;"></div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);margin-top:4px;">Daily drawdown used: <span id="rp-limit-pct">0%</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Recent Sim Trades -->
+    <div class="rp-section">
+      <div class="rp-title">Recent Sim Trades</div>
+      <div id="right-panel-trades">
+        <div style="font-size:11px;color:var(--text3);">No sim trades yet</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="rp-section">
+      <div class="rp-title">Last Scan</div>
+      <div id="right-panel-scan-time" style="font-family:var(--font-mono);font-size:11px;color:var(--text3);">Not scanned yet</div>
+    </div>
+  </div>
+
+
+  <!-- MOBILE NAV -->
+  <div class="mobile-nav">
+    <button class="mobile-nav-item active" onclick="navigate('home',this)"><img src="icons/icon-home.svg" class="nav-icon" alt="">HOME</button>
+    <button class="mobile-nav-item" onclick="navigate('academy',this)"><img src="icons/icon-academy.svg" class="nav-icon" alt="">ACADEMY</button>
+    <button class="mobile-nav-item" onclick="navigate('simtrader',this)"><img src="icons/icon-sim.svg" class="nav-icon" alt="">SIM</button>
+    <button class="mobile-nav-item" onclick="navigate('autotrader',this)"><img src="icons/icon-lumen.svg" class="nav-icon" alt="">LUMEN</button>
+    <button class="mobile-nav-item" onclick="navigate('markets',this)"><img src="icons/icon-markets.svg" class="nav-icon" alt="">MARKETS</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════
+     ONBOARDING MODAL
+═══════════════════════════════════════════ -->
+<div id="onboarding-modal" style="display:none;" class="ob-overlay" role="dialog" aria-modal="true" aria-label="Welcome to Marktrader">
+  <div class="ob-card">
+    <div class="ob-header">
+      <div id="ob-dots" class="ob-dots-row"></div>
+      <button class="ob-close-btn" onclick="obClose()" aria-label="Close">&times;</button>
+    </div>
+    <div id="ob-body" class="ob-body-wrap"></div>
+    <div id="ob-actions" class="ob-actions-row"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     LEGAL MODALS
+═══════════════════════════════════════════ -->
+<div id="legal-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(6,6,8,0.97);overflow-y:auto;padding:24px 16px;" onclick="if(event.target===this)closeLegalModal()">
+  <div style="max-width:680px;margin:0 auto;position:relative;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div id="legal-modal-title" style="font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:-0.04em;"></div>
+      <button onclick="closeLegalModal()" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text3);padding:8px 14px;cursor:pointer;font-family:var(--font-mono);font-size:9px;letter-spacing:1px;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)'">CLOSE</button>
+    </div>
+    <!-- Privacy content -->
+    <div id="legal-content-privacy" style="display:none;">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:20px;">LAST UPDATED: APRIL 2026</div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Overview</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;">Marktrader is a trader training platform provided by Aperintel, offering simulated trading tools for educational purposes. This privacy policy explains how we handle your personal data and protect your privacy.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Data We Collect</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Local Storage Only:</strong> All practice trade data, settings, and user preferences are stored locally on your device using browser local storage. We do not transmit or store this data on our servers.</p>
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">API Keys and Credentials:</strong> Any API keys, authentication tokens, or credentials you provide are stored only in your browser's local storage. These are never sent to Aperintel servers. They are sent directly and exclusively to the respective third-party API provider as needed.</p>
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Analytics:</strong> We may use anonymised, aggregated analytics to understand platform usage patterns and improve features. No personally identifiable information is collected, stored, or analysed. Individual user behaviour is not tracked.</p>
+          <p style="margin:0;"><strong style="color:var(--text);">Third Party Data Sharing:</strong> We do not sell, rent, or share your personal data with third parties. Your local data remains entirely under your control.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Your Rights and Data Control</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          <p style="margin:0 0 8px;">Under GDPR and similar data protection regulations, you have the following rights:</p>
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Right to Access:</strong> You can view all your data stored locally at any time through your browser's developer tools or by exporting it.</p>
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Right to Delete:</strong> You can permanently delete all your personal data by clearing your browser local storage or using the "Clear All Data" option in Settings.</p>
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Right to Correct:</strong> You can edit or update any personal information (such as trader name) at any time in Settings.</p>
+          <p style="margin:0;"><strong style="color:var(--text);">Right to Withdraw:</strong> You can stop using the platform at any time and your local data will remain on your device until you choose to delete it.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Cookies and Local Storage</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">We use essential browser local storage and cookies for app functionality only, including session management and user preferences. We do not use tracking cookies, advertising cookies, or any third party analytics cookies. No profiling or behavioural tracking is performed.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Security</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Since all personal data is stored locally on your device, the security of your information depends on your device's security. We recommend keeping your browser and operating system updated, using a strong device password, and clearing local storage when using shared devices.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Contact and Complaints</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">If you have questions about this privacy policy or wish to exercise your data rights, please contact Aperintel. You also have the right to lodge a complaint with your local data protection authority if you believe your privacy rights have been violated.</div>
+      </div>
+      <div style="margin-top:16px;font-family:var(--font-mono);font-size:9px;color:var(--text4);line-height:1.8;padding-bottom:40px;">
+        This policy applies to Marktrader provided by Aperintel. The policy will be updated as the platform develops. Continued use of Marktrader constitutes acceptance of this privacy policy.
+      </div>
+    </div>
+    <!-- Terms content -->
+    <div id="legal-content-terms" style="display:none;">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:20px;">LAST UPDATED: APRIL 2026</div>
+      <div class="card" style="margin-bottom:12px;border-color:var(--gold);">
+        <div class="card-label" style="color:var(--gold);">Important Notice</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;font-weight:500;">Marktrader, provided by Aperintel, is an educational trader training platform only. It does not provide financial advice, manage real funds, or operate as a broker or investment service. All trading activity within Marktrader is simulated. No real money is at risk at any time.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Acceptance of Terms</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">By accessing and using Marktrader, you agree to be bound by these terms and conditions. If you do not agree with any part of these terms, you must not use the platform.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Use of the Platform</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          <p style="margin:0 0 8px;">1. Marktrader is provided exclusively for educational and training purposes only.</p>
+          <p style="margin:0 0 8px;">2. All trades executed within Marktrader are simulated practice trades. No real funds are used, no real orders are placed, and no real money is at risk at any time.</p>
+          <p style="margin:0 0 8px;">3. Past simulated performance does not indicate future real trading results. Simulated trading does not account for slippage, liquidity constraints, or other real market factors.</p>
+          <p style="margin:0 0 8px;">4. Analysis, signals, and feedback provided by Marktrader and its Lumen intelligence engine are for educational guidance only and should not be treated as financial advice or recommendations to trade.</p>
+          <p style="margin:0;5. Users are solely responsible for any real trading decisions they make based on education received through Marktrader. Aperintel and Marktrader bear no liability for real trading losses or financial outcomes.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Financial Regulatory Disclaimer</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Marktrader is not authorised or regulated by the Financial Conduct Authority (FCA), the Securities and Exchange Commission (SEC), or any other financial regulatory body in any jurisdiction. This platform does not constitute an offer or solicitation to buy or sell any financial instrument. Users must obtain their own independent financial advice from appropriately licensed professionals before making real trading decisions.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Intellectual Property and Copyright</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Copyright Notice:</strong> Marktrader and all its content, design, software, graphics, logos, and technology are the exclusive property of Aperintel. All rights reserved. Copyright 2026 Aperintel.</p>
+          <p style="margin:0 0 8px;"><strong style="color:var(--text);">Licence Grant:</strong> You are granted a limited, non exclusive, non transferable licence to use Marktrader for personal educational purposes only.</p>
+          <p style="margin:0;"><strong style="color:var(--text);">Restrictions:</strong> You may not reproduce, distribute, modify, reverse engineer, or create derivative works of Marktrader or any of its content without express written permission from Aperintel.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">User Conduct</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Users agree to use Marktrader in accordance with all applicable laws and regulations. You agree not to use the platform for any illegal purpose, to harass others, or to transmit harmful content. Aperintel reserves the right to suspend or terminate access for any violations.</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Third Party Services</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Marktrader integrates with third party services including TradingView, Binance, Forex Factory, Deriv, Finnhub, and OANDA. Use of these services is subject to their respective terms of service. Aperintel is not affiliated with, endorsed by, or responsible for any third party providers. Data sent to third party APIs is subject to their privacy policies.</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;">Forex and metals live prices and candle data: <span style="color:#FF444F;font-weight:600;">Powered by Deriv</span> | Crypto: Binance | Indices and other: TwelveData | Charts: TradingView | News: Finnhub | Sentiment: OANDA</div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-label">Limitation of Liability</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Marktrader is provided on an "as is" basis. Aperintel makes no warranties, express or implied, regarding the accuracy, completeness, or fitness for any particular purpose. To the maximum extent permitted by law, Aperintel is not liable for any direct, indirect, incidental, special, or consequential damages arising from the use of or inability to use Marktrader.</div>
+      </div>
+      <div class="card" style="padding-bottom:40px;">
+        <div class="card-label">Changes to Terms</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">Aperintel reserves the right to modify these terms at any time. Continued use of Marktrader after changes constitutes acceptance of the new terms. Users are responsible for reviewing these terms periodically.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
+/* Stage 0 bootstrap: preload tab HTML fragments into #tab-panels, then load JS
+   modules sequentially in source order. Plain <script> tags preserve global scope
+   so function/var declarations work identically to the original monolithic file. */
+(function(){
+  var tabs = ['home','markets','calc','chart','journal','rules','settings','simtrader','autotrader','academy'];
+  var modules = ['utils','intel-yields','intel-cot','intel-wyckoff','intel-regime','intel-correlations','intel-liquidity','intel-calendar','intel-sessions','intel-portfolio','prices','core','academy','chart','settings','markets','behaviour','simtrader','lumen','home'];
+  var container = document.getElementById('tab-panels');
+  Promise.all(tabs.map(function(t){
+    return fetch('html/tab-' + t + '.html').then(function(r){ return r.text(); });
+  })).then(function(parts){
+    container.innerHTML = parts.join('\n');
+    return modules.reduce(function(chain, name){
+      return chain.then(function(){
+        return new Promise(function(resolve, reject){
+          var s = document.createElement('script');
+          s.src = 'js/' + name + '.js';
+          s.onload = resolve;
+          s.onerror = reject;
+          document.body.appendChild(s);
+        });
+      });
+    }, Promise.resolve()).then(function(){
+      // All modules confirmed loaded — fire the ready callback.
+      // This replaces window.addEventListener('load') in academy.js which is
+      // unreliable: the load event can fire before dynamic modules finish loading.
+      if (typeof __wmReady === 'function') __wmReady();
+    });
+  }).catch(function(err){
+    console.error('Bootstrap failed:', err);
+  });
+})();
+</script>
+</body>
+</html>

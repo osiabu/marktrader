@@ -1,0 +1,12 @@
+name = "marktrader-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# Non-secret config vars go here (currently none needed)
+
+# Secrets are added via CLI:
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put TWELVEDATA_API_KEY
+#   wrangler secret put FINNHUB_API_KEY
+#   wrangler secret put GROK_API_KEY

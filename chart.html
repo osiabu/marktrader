@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Marktrader · Sim Trader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body { margin:0; padding:0; background:#060608; color:#FFFFFF; height:100%; overflow:hidden;
+  font-family:'Inter','Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:13px; -webkit-font-smoothing:antialiased; }
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --gold:#F0B429; --gold-dim:#F0B42922; --green:#00E87A; --green-dim:#00E87A18;
+  --red:#FF3D5A; --blue:#00C8FF; --purple:#A855F7;
+  --bg:#060608; --bg1:#0C0C10; --bg2:#111116; --bg3:#17171E;
+  --border:#1E1E28; --border2:#252530; --border3:#2E2E3C;
+  --text:#FFFFFF; --text2:#CFCFE8; --text3:#A0A0B8; --text4:#6B6B85;
+  --font-display:'Syne',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+
+/* ── LAYOUT ── */
+#shell { display:grid; grid-template-columns:1fr 300px; height:100vh; overflow:hidden; }
+#chart-area { display:flex; flex-direction:column; min-width:0; }
+#side-panel { background:var(--bg1); border-left:1px solid var(--border); overflow-y:auto; display:flex; flex-direction:column; }
+
+/* ── TOP BAR ── */
+#topbar {
+  display:flex; align-items:center; gap:10px; padding:10px 14px;
+  background:var(--bg1); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap;
+}
+.back-btn {
+  background:var(--bg2); border:1px solid var(--border2); border-radius:6px;
+  padding:5px 10px; color:var(--text3); font-family:var(--font-mono); font-size:10px;
+  cursor:pointer; text-decoration:none; transition:all 0.15s; flex-shrink:0;
+}
+.back-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* ── INSTRUMENT DROPDOWN ── */
+.inst-wrap { position:relative; }
+.inst-trigger {
+  background:var(--bg2); border:1px solid var(--border2); border-radius:6px;
+  padding:6px 30px 6px 10px; color:var(--text); font-family:var(--font-mono); font-size:11px;
+  cursor:pointer; display:flex; align-items:center; gap:8px; transition:border-color 0.2s; min-width:200px;
+}
+.inst-trigger:hover { border-color:var(--gold); }
+.inst-badge { background:var(--gold-dim); border:1px solid var(--gold); border-radius:4px; padding:1px 6px; font-size:9px; color:var(--gold); font-weight:700; }
+.inst-panel {
+  display:none; position:absolute; top:calc(100% + 4px); left:0; width:320px;
+  background:#0E0E14; border:1px solid var(--border2); border-radius:10px;
+  z-index:300; max-height:420px; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.7);
+}
+.inst-panel.open { display:block; }
+.inst-search-wrap { position:sticky; top:0; background:#0E0E14; padding:8px; border-bottom:1px solid var(--border); }
+.inst-search-wrap input {
+  width:100%; background:#060608; border:1px solid var(--border2); border-radius:6px;
+  padding:6px 10px; color:var(--text); font-family:var(--font-mono); font-size:11px; outline:none;
+}
+.inst-search-wrap input:focus { border-color:var(--gold); }
+.inst-group { font-family:var(--font-mono); font-size:8px; color:var(--text4); letter-spacing:2px; padding:8px 12px 3px; }
+.inst-row {
+  display:flex; align-items:center; gap:10px; padding:7px 12px;
+  cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.1s;
+}
+.inst-row:hover { background:var(--bg2); }
+.inst-row.active { background:var(--gold-dim); }
+.inst-sym { font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--text); min-width:72px; }
+.inst-name { font-size:11px; color:var(--text3); flex:1; }
+
+/* ── TF BUTTONS ── */
+.tf-row { display:flex; gap:4px; }
+.tf-btn {
+  font-family:var(--font-mono); font-size:9px; padding:4px 9px;
+  border-radius:5px; cursor:pointer; border:1px solid var(--border2);
+  background:var(--bg3); color:var(--text3); transition:all 0.15s;
+}
+.tf-btn:hover { border-color:var(--border3); color:var(--text2); }
+.tf-btn.active { border-color:var(--gold); background:var(--gold-dim); color:var(--gold); }
+
+/* ── CHART IFRAME ── */
+#chart-frame { flex:1; border:none; display:block; background:#060608; }
+
+/* ── SIDE PANEL SECTIONS ── */
+.sp-section { padding:14px; border-bottom:1px solid var(--border); }
+.sp-label { font-family:var(--font-mono); font-size:8px; color:var(--text3); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+.price-big { font-family:var(--font-display); font-size:30px; font-weight:800; color:var(--text); line-height:1; }
+.price-sub { font-family:var(--font-mono); font-size:10px; color:var(--text3); margin-top:4px; }
+.session-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+.sess-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.sess-open  { background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse 2s infinite; }
+.sess-closed{ background:var(--text3); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── QUICK CALC ── */
+.calc-input {
+  width:100%; background:var(--bg2); border:1px solid var(--border2); border-radius:6px;
+  padding:7px 10px; color:var(--text); font-family:var(--font-mono); font-size:12px;
+  outline:none; margin-bottom:6px; transition:border-color 0.2s;
+}
+.calc-input:focus { border-color:var(--gold); }
+.calc-input::placeholder { color:var(--text4); }
+.calc-label { font-family:var(--font-mono); font-size:8px; color:var(--text3); letter-spacing:1px; display:block; margin-bottom:3px; }
+.calc-result-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); }
+.calc-result-label { font-family:var(--font-mono); font-size:9px; color:var(--text3); }
+.calc-result-val   { font-family:var(--font-mono); font-size:12px; font-weight:700; }
+
+/* ── KEY LEVELS ── */
+.level-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:11px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:3px; } ::-webkit-scrollbar-track { background:var(--bg1); } ::-webkit-scrollbar-thumb { background:var(--border3); border-radius:2px; }
+
+/* ── MOBILE ── */
+@media(max-width:900px) {
+  #shell { grid-template-columns:1fr; grid-template-rows:1fr auto; }
+  #side-panel { display:none; }
+  #chart-area { height:100vh; }
+}
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <!-- CHART AREA -->
+  <div id="chart-area">
+    <div id="topbar">
+      <a href="index.html" class="back-btn">Marktrader Home</a>
+
+      <!-- Instrument selector -->
+      <div class="inst-wrap">
+        <div class="inst-trigger" onclick="toggleDrop()" id="inst-trigger">
+          <span class="inst-badge" id="inst-badge">XAU/USD</span>
+          <span id="inst-name" style="color:var(--text2);">Gold</span>
+          <span style="margin-left:auto;color:var(--text3);font-size:9px;">▼</span>
+        </div>
+        <div class="inst-panel" id="inst-panel">
+          <div class="inst-search-wrap">
+            <input type="text" placeholder="Search instrument..." id="inst-search" oninput="filterInst(this.value)" onclick="event.stopPropagation()">
+          </div>
+          <div id="inst-list"></div>
+        </div>
+      </div>
+
+      <!-- TF buttons -->
+      <div class="tf-row">
+        <button class="tf-btn" onclick="setTF(this,'1')">1M</button>
+        <button class="tf-btn" onclick="setTF(this,'5')">5M</button>
+        <button class="tf-btn active" onclick="setTF(this,'15')">15M</button>
+        <button class="tf-btn" onclick="setTF(this,'60')">1H</button>
+        <button class="tf-btn" onclick="setTF(this,'240')">4H</button>
+        <button class="tf-btn" onclick="setTF(this,'D')">D</button>
+      </div>
+
+      <!-- Live price in topbar -->
+      <div style="margin-left:auto;text-align:right;flex-shrink:0;">
+        <div id="tb-price" style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--text);">—</div>
+        <div id="tb-pair"  style="font-family:var(--font-mono);font-size:8px;color:var(--text3);">XAU/USD</div>
+      </div>
+    </div>
+
+    <iframe id="chart-frame" src="" allowtransparency="true" frameborder="0"></iframe>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div id="side-panel">
+    <!-- Live Price -->
+    <div class="sp-section">
+      <div class="sp-label">Live Price</div>
+      <div id="sp-price" class="price-big">—</div>
+      <div id="sp-meta"  class="price-sub">XAU/USD · Gold</div>
+    </div>
+
+    <!-- Session -->
+    <div class="sp-section">
+      <div class="sp-label">Session</div>
+      <div class="session-row">
+        <div class="sess-dot" id="sess-dot"></div>
+        <div id="sess-label" style="font-family:var(--font-mono);font-size:11px;color:var(--text2);">—</div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);line-height:1.8;margin-top:4px;">
+        London: 08:00–16:00 UTC<br>New York: 13:00–22:00 UTC<br>Tokyo: 00:00–08:00 UTC
+      </div>
+    </div>
+
+    <!-- Quick Calculator -->
+    <div class="sp-section">
+      <div class="sp-label">Quick Calculator</div>
+      <label class="calc-label">ENTRY</label>
+      <input class="calc-input" id="c-entry" type="number" placeholder="3080.00" oninput="calcRR()" step="0.01">
+      <label class="calc-label">STOP LOSS</label>
+      <input class="calc-input" id="c-sl" type="number" placeholder="3065.00" oninput="calcRR()" step="0.01">
+      <label class="calc-label">TAKE PROFIT</label>
+      <input class="calc-input" id="c-tp" type="number" placeholder="3110.00" oninput="calcRR()" step="0.01">
+      <div style="margin-top:6px;">
+        <div class="calc-result-row"><span class="calc-result-label">SL DISTANCE</span><span class="calc-result-val" id="c-sl-d" style="color:var(--red);">—</span></div>
+        <div class="calc-result-row"><span class="calc-result-label">TP DISTANCE</span><span class="calc-result-val" id="c-tp-d" style="color:var(--green);">—</span></div>
+        <div class="calc-result-row"><span class="calc-result-label">R:R RATIO</span><span class="calc-result-val" id="c-rr"  style="color:var(--gold);">—</span></div>
+        <div class="calc-result-row" style="border:none;"><span class="calc-result-label">LOT SIZE</span><span class="calc-result-val" id="c-lot" style="color:var(--blue);">—</span></div>
+      </div>
+    </div>
+
+    <!-- Key Levels -->
+    <div class="sp-section" style="flex:1;">
+      <div class="sp-label">Key Levels <span style="font-size:7px;color:var(--text4);">from last scan</span></div>
+      <div id="sp-levels">
+        <div style="font-size:11px;color:var(--text3);">Run a scan in Marktrader to populate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── INSTRUMENT LIBRARY (mirrored from main app) ──
+const INSTRUMENTS = {
+  'Metals':[
+    {id:'XAUUSD',label:'XAU/USD',name:'Gold',tv:'OANDA:XAUUSD'},{id:'XAGUSD',label:'XAG/USD',name:'Silver',tv:'OANDA:XAGUSD'},
+    {id:'XPTUSD',label:'XPT/USD',name:'Platinum',tv:'OANDA:XPTUSD'},{id:'XCUUSD',label:'XCU/USD',name:'Copper',tv:'OANDA:XCUUSD'},
+  ],
+  'Forex — Majors':[
+    {id:'EURUSD',label:'EUR/USD',name:'Euro',tv:'OANDA:EURUSD'},{id:'GBPUSD',label:'GBP/USD',name:'Sterling',tv:'OANDA:GBPUSD'},
+    {id:'USDJPY',label:'USD/JPY',name:'Yen',tv:'OANDA:USDJPY'},{id:'USDCHF',label:'USD/CHF',name:'Swissy',tv:'OANDA:USDCHF'},
+    {id:'AUDUSD',label:'AUD/USD',name:'Aussie',tv:'OANDA:AUDUSD'},{id:'USDCAD',label:'USD/CAD',name:'Loonie',tv:'OANDA:USDCAD'},
+    {id:'NZDUSD',label:'NZD/USD',name:'Kiwi',tv:'OANDA:NZDUSD'},
+  ],
+  'Forex — Minors':[
+    {id:'EURGBP',label:'EUR/GBP',name:'Cable Cross',tv:'OANDA:EURGBP'},{id:'EURJPY',label:'EUR/JPY',name:'Euro-Yen',tv:'OANDA:EURJPY'},
+    {id:'GBPJPY',label:'GBP/JPY',name:'Guppy',tv:'OANDA:GBPJPY'},{id:'AUDJPY',label:'AUD/JPY',name:'Aussie-Yen',tv:'OANDA:AUDJPY'},
+    {id:'CADJPY',label:'CAD/JPY',name:'Loonie-Yen',tv:'OANDA:CADJPY'},{id:'EURCHF',label:'EUR/CHF',name:'Euro-Swissy',tv:'OANDA:EURCHF'},
+    {id:'GBPCHF',label:'GBP/CHF',name:'Sterling-Swiss',tv:'OANDA:GBPCHF'},{id:'EURCAD',label:'EUR/CAD',name:'Euro-Loonie',tv:'OANDA:EURCAD'},
+  ],
+  'Crypto':[
+    {id:'BTCUSD',label:'BTC/USD',name:'Bitcoin',tv:'BITSTAMP:BTCUSD'},{id:'ETHUSD',label:'ETH/USD',name:'Ethereum',tv:'BITSTAMP:ETHUSD'},
+    {id:'SOLUSD',label:'SOL/USD',name:'Solana',tv:'COINBASE:SOLUSD'},{id:'XRPUSD',label:'XRP/USD',name:'Ripple',tv:'BITSTAMP:XRPUSD'},
+  ],
+  'Indices':[
+    {id:'US30',label:'US30',name:'Dow Jones',tv:'FOREXCOM:DJI'},{id:'SPX500',label:'SPX500',name:'S&P 500',tv:'FOREXCOM:SPX500'},
+    {id:'NAS100',label:'NAS100',name:'Nasdaq 100',tv:'FOREXCOM:NAS100'},{id:'UK100',label:'UK100',name:'FTSE 100',tv:'FOREXCOM:UK100'},
+    {id:'GER40',label:'GER40',name:'DAX 40',tv:'FOREXCOM:GER40'},{id:'JPN225',label:'JPN225',name:'Nikkei',tv:'FOREXCOM:JPN225'},
+  ],
+  'Energy':[
+    {id:'USOIL',label:'WTI',name:'Crude Oil WTI',tv:'NYMEX:CL1!'},{id:'UKOIL',label:'BRENT',name:'Brent Crude',tv:'NYMEX:BB1!'},
+    {id:'NATGAS',label:'NATGAS',name:'Natural Gas',tv:'NYMEX:NG1!'},
+  ],
+  'Softs & Ags':[
+    {id:'COFFEE',label:'COFFEE',name:'Coffee',tv:'ICEUS:KC1!'},{id:'COCOA',label:'COCOA',name:'Cocoa',tv:'ICEUS:CC1!'},
+    {id:'SUGAR',label:'SUGAR',name:'Sugar #11',tv:'ICEUS:SB1!'},{id:'WHEAT',label:'WHEAT',name:'Wheat',tv:'CBOT:ZW1!'},
+    {id:'CORN',label:'CORN',name:'Corn',tv:'CBOT:ZC1!'},
+  ],
+};
+
+const TD_SYMBOLS = {};
+const TV_SYMBOLS = {};
+const META       = {};
+Object.values(INSTRUMENTS).forEach(g => g.forEach(i => {
+  TD_SYMBOLS[i.id] = i.td || (i.label.replace('/','/'));
+  TV_SYMBOLS[i.id] = i.tv;
+  META[i.id] = i;
+}));
+
+// ── STATE ──
+let currentPair = localStorage.getItem('wm_chart_pair') || 'XAUUSD';
+let currentTF   = '15';
+let tdKey       = localStorage.getItem('wm_td')     || '';
+let prevPrice   = null;
+let priceTimer  = null;
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  buildInstList();
+  selectPair(currentPair);
+  startClock();
+  if (tdKey) fetchPrice();
+  loadKeyLevels();
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.inst-wrap')) closeDropdown();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDropdown();
+  });
+});
+
+// ── INSTRUMENT LIST ──
+function buildInstList(filter) {
+  const q    = (filter || '').toLowerCase();
+  const list = document.getElementById('inst-list');
+  let html   = '';
+  Object.entries(INSTRUMENTS).forEach(([group, items]) => {
+    const filtered = items.filter(i => !q || i.label.toLowerCase().includes(q) || i.name.toLowerCase().includes(q) || i.id.toLowerCase().includes(q));
+    if (!filtered.length) return;
+    html += '<div class="inst-group">' + group + '</div>';
+    filtered.forEach(i => {
+      html += '<div class="inst-row ' + (i.id === currentPair ? 'active' : '') + '" onclick="selectPair(\'' + i.id + '\')">' +
+        '<span class="inst-sym">' + i.label + '</span>' +
+        '<span class="inst-name">' + i.name + '</span>' +
+      '</div>';
+    });
+  });
+  list.innerHTML = html || '<div style="padding:12px;color:var(--text3);font-size:11px;">No results</div>';
+}
+
+function filterInst(q) { buildInstList(q); }
+
+function selectPair(id) {
+  currentPair = id;
+  localStorage.setItem('wm_chart_pair', id);
+  const inst = META[id];
+  // Update trigger
+  document.getElementById('inst-badge').textContent  = inst ? inst.label : id;
+  document.getElementById('inst-name').textContent   = inst ? inst.name  : '';
+  document.getElementById('tb-pair').textContent     = inst ? inst.label : id;
+  document.getElementById('sp-meta').textContent     = (inst ? inst.label + ' · ' + inst.name : id);
+  // Load chart
+  loadChart();
+  // Reset price
+  document.getElementById('sp-price').textContent = '—';
+  document.getElementById('tb-price').textContent = '—';
+  // Close dropdown + clear search
+  closeDropdown();
+  document.getElementById('inst-search').value = '';
+  buildInstList();
+  // Fetch price
+  clearTimeout(priceTimer);
+  if (tdKey) fetchPrice();
+  // Recalc
+  calcRR();
+}
+
+function toggleDrop() {
+  const panel = document.getElementById('inst-panel');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if (!isOpen) setTimeout(() => document.getElementById('inst-search').focus(), 50);
+}
+function closeDropdown() {
+  document.getElementById('inst-panel')?.classList.remove('open');
+}
+
+// ── CHART ──
+function loadChart() {
+  const sym = encodeURIComponent(TV_SYMBOLS[currentPair] || 'OANDA:XAUUSD');
+  document.getElementById('chart-frame').src =
+    'https://s.tradingview.com/widgetembed/?frameElementId=chart-frame' +
+    '&symbol=' + sym + '&interval=' + currentTF +
+    '&hidesidetoolbar=0&hidetoptoolbar=1&symboledit=1&saveimage=0' +
+    '&toolbarbg=060608&studies=%5B%5D&theme=dark&style=1' +
+    '&timezone=Etc%2FUTC&withdateranges=1&showpopupbutton=0&locale=en';
+}
+
+function setTF(btn, tf) {
+  currentTF = tf;
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadChart();
+}
+
+// ── LIVE PRICE ──
+async function fetchPrice() {
+  if (!tdKey) return;
+  const td_sym = TD_SYMBOLS[currentPair] || currentPair;
+  try {
+    const res  = await fetch('https://api.twelvedata.com/price?symbol=' + encodeURIComponent(td_sym) + '&apikey=' + tdKey);
+    const data = await res.json();
+    const p    = parseFloat(data.price);
+    if (isNaN(p)) throw new Error('bad price');
+    const dp   = ['BTCUSD','ETHUSD','US30','SPX500','NAS100','XAUUSD','XAGUSD'].includes(currentPair) ? 2 : 5;
+    const formatted = p.toFixed(dp);
+    const up   = prevPrice !== null && p > prevPrice;
+    const dn   = prevPrice !== null && p < prevPrice;
+    const col  = up ? 'var(--green)' : dn ? 'var(--red)' : 'var(--text)';
+    document.getElementById('sp-price').textContent = formatted;
+    document.getElementById('sp-price').style.color = col;
+    document.getElementById('tb-price').textContent = formatted;
+    document.getElementById('tb-price').style.color = col;
+    prevPrice = p;
+  } catch(e) { console.warn('price:', e.message); }
+  priceTimer = setTimeout(fetchPrice, 5000);
+}
+
+// ── CLOCK & SESSION ──
+function startClock() {
+  function tick() {
+    const now  = new Date();
+    const utcH = now.getUTCHours();
+    let session = 'Market Closed', isOpen = false;
+    if (utcH >= 22 || utcH < 8)  { session = 'Sydney Open';   isOpen = true; }
+    if (utcH >= 7  && utcH < 16) { session = 'London Open';   isOpen = true; }
+    if (utcH >= 13 && utcH < 22) { session = 'New York Open'; isOpen = true; }
+    if (utcH >= 8  && utcH < 10) session = 'London + Tokyo Overlap';
+    if (utcH >= 13 && utcH < 17) session = 'London + NY Overlap';
+    const dot = document.getElementById('sess-dot');
+    const lbl = document.getElementById('sess-label');
+    if (dot) { dot.className = 'sess-dot ' + (isOpen ? 'sess-open' : 'sess-closed'); }
+    if (lbl) lbl.textContent = session;
+  }
+  tick();
+  setInterval(tick, 10000);
+}
+
+// ── QUICK CALC ──
+function calcRR() {
+  const entry = parseFloat(document.getElementById('c-entry').value);
+  const sl    = parseFloat(document.getElementById('c-sl').value);
+  const tp    = parseFloat(document.getElementById('c-tp').value);
+  const set   = (id, val) => { document.getElementById(id).textContent = val; };
+  if (!entry || !sl) { set('c-sl-d','—'); set('c-tp-d','—'); set('c-rr','—'); set('c-lot','—'); return; }
+  const slD = Math.abs(entry - sl);
+  const tpD = tp ? Math.abs(tp - entry) : null;
+  set('c-sl-d', slD.toFixed(2) + ' pts');
+  set('c-tp-d', tpD ? tpD.toFixed(2) + ' pts' : '—');
+  set('c-rr',   tpD ? '1:' + (tpD/slD).toFixed(2) : '—');
+  // Lot size from stored balance
+  const bal  = parseFloat(localStorage.getItem('wm_balance') || '0');
+  const risk = parseFloat(localStorage.getItem('wm_risk')    || '1');
+  if (bal && slD) {
+    const lot = Math.max(0.01, Math.floor((bal*risk/100/slD)*100)/100);
+    set('c-lot', lot.toFixed(2));
+  } else {
+    set('c-lot', '—');
+  }
+}
+
+// ── KEY LEVELS from last scan (stored in localStorage by main app) ──
+function loadKeyLevels() {
+  const raw = localStorage.getItem('wm_last_levels_' + currentPair);
+  const el  = document.getElementById('sp-levels');
+  if (!el) return;
+  if (!raw) { el.innerHTML = '<div style="font-size:11px;color:var(--text3);">Run a scan in Marktrader to populate</div>'; return; }
+  try {
+    const levels = JSON.parse(raw);
+    const sup = (levels.support    || []).slice(0,4);
+    const res = (levels.resistance || []).slice(0,4);
+    el.innerHTML =
+      '<div style="font-family:var(--font-mono);font-size:8px;color:var(--green);letter-spacing:1px;margin-bottom:4px;">SUPPORT</div>' +
+      sup.map(l => '<div class="level-row"><span style="color:var(--text2);">'+l+'</span></div>').join('') +
+      '<div style="font-family:var(--font-mono);font-size:8px;color:var(--red);letter-spacing:1px;margin:8px 0 4px;">RESISTANCE</div>' +
+      res.map(l => '<div class="level-row"><span style="color:var(--text2);">'+l+'</span></div>').join('');
+  } catch(e) { el.innerHTML = '<div style="font-size:11px;color:var(--text3);">No level data</div>'; }
+}
+</script>
+</body>
+</html>

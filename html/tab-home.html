@@ -1,0 +1,230 @@
+    <div class="tab-panel active" id="tab-home">
+
+      <!-- ══ HOME COMMAND CENTRE ══ -->
+
+      <!-- Page header -->
+      <div class="home-header">
+        <div class="home-mark">
+          <span class="home-eyebrow">Intelligence Console</span>
+        </div>
+        <div id="home-utc-clock" class="home-clock">00:00:00 UTC</div>
+      </div>
+
+      <!-- Live ticker strip -->
+      <div class="home-ticker-row">
+        <div class="home-live-flag">
+          <span id="price-live-dot" class="home-live-dot"></span>
+          <span class="home-live-label">Live</span>
+        </div>
+        <div id="mobile-price-tiles" class="price-ticker home-ticker">
+          <div class="home-ticker-loading">Tuning into the markets.</div>
+        </div>
+        <div id="mobile-price-stamp" class="home-ticker-stamp"></div>
+      </div>
+
+      <!-- Status strip -->
+      <div class="home-status">
+        <div class="home-status-cell">
+          <span class="home-status-label">Session</span>
+          <div class="home-status-row">
+            <span id="home-session-dot" class="home-status-dot"></span>
+            <span id="home-session-label" class="home-status-value">Off hours</span>
+          </div>
+        </div>
+        <div class="home-status-cell">
+          <span class="home-status-label">Fear and Greed</span>
+          <span id="home-fng-display" class="home-status-value">Standby</span>
+        </div>
+        <div class="home-status-cell">
+          <span class="home-status-label">Market Pulse</span>
+          <span id="home-pulse-label" class="home-status-value">Standby</span>
+        </div>
+        <div class="home-status-cell">
+          <span class="home-status-label">Open Exposure</span>
+          <span id="home-portfolio-state" class="home-status-value">No positions open</span>
+        </div>
+        <div class="home-status-cell">
+          <span class="home-status-label">Next Event</span>
+          <span id="home-next-event" class="home-status-value">Calendar quiet</span>
+        </div>
+        <div class="home-status-cell home-status-cell-end">
+          <span class="home-status-label">Refreshed</span>
+          <span id="home-hero-refresh-stamp" class="home-status-value home-status-value-quiet">just now</span>
+        </div>
+      </div>
+
+      <!-- ══ SECTION: THE MARKET, RIGHT NOW ══ -->
+      <section class="home-section">
+        <header class="home-section-head">
+          <div>
+            <h1 class="home-display">The market, right now.</h1>
+            <p class="home-display-caption">A reading of phase, regime, positioning and liquidity for the instruments under Lumen's watch this session.</p>
+          </div>
+          <div class="home-section-meta">
+            <span class="home-section-eyebrow">Snapshot</span>
+            <span id="home-snapshot-stamp" class="home-section-stamp">awaiting first read</span>
+          </div>
+        </header>
+
+        <div id="home-intel-grid" class="home-intel-grid">
+          <!-- populated by home_refreshIntelSnapshot -->
+        </div>
+      </section>
+
+      <!-- ══ SECTION: OPEN POSITIONS LEDGER ══ -->
+      <section class="home-section">
+        <header class="home-section-head">
+          <div>
+            <h2 class="home-subdisplay">Live exposure.</h2>
+            <p class="home-subdisplay-caption">Every open position across the Intraday engine, the Scalp engine and the Sim Trader, with a running profit and loss read.</p>
+          </div>
+          <div class="home-section-meta">
+            <span class="home-section-eyebrow">Ledger</span>
+            <span id="home-ledger-stamp" class="home-section-stamp">no positions open</span>
+          </div>
+        </header>
+
+        <div id="home-ledger" class="home-ledger">
+          <div class="home-ledger-empty">No open positions. Start an engine from the launch panel below.</div>
+        </div>
+      </section>
+
+      <!-- ══ SECTION: TWO COLUMN, CALENDAR + ACTIVITY ══ -->
+      <section class="home-section home-twocol">
+
+        <div class="home-col">
+          <header class="home-section-head home-section-head-tight">
+            <div>
+              <h2 class="home-subdisplay">Upcoming risk.</h2>
+              <p class="home-subdisplay-caption">High impact releases in the next two hours. Lumen tightens execution around these.</p>
+            </div>
+            <span class="home-section-eyebrow">Calendar</span>
+          </header>
+          <div id="home-calendar-strip" class="home-calendar-strip">
+            <div class="home-calendar-empty">No high impact events on the horizon.</div>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <header class="home-section-head home-section-head-tight">
+            <div>
+              <h2 class="home-subdisplay">Lumen activity.</h2>
+              <p class="home-subdisplay-caption">The most recent reads from both engines. Skips, signals and executions.</p>
+            </div>
+            <span class="home-section-eyebrow">Live feed</span>
+          </header>
+          <div id="home-activity-feed" class="home-activity-feed">
+            <div class="home-activity-empty">Both engines idle. Start one from the launch panel to populate this feed.</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ══ SECTION: TWO COLUMN, CORRELATION + INSIGHTS ══ -->
+      <section class="home-section home-twocol">
+
+        <div class="home-col">
+          <header class="home-section-head home-section-head-tight">
+            <div>
+              <h2 class="home-subdisplay">Correlation pulse.</h2>
+              <p class="home-subdisplay-caption">Pairs whose recent correlation has parted from prior behaviour.</p>
+            </div>
+            <span class="home-section-eyebrow">Cross asset</span>
+          </header>
+          <div id="home-correlation-pulse" class="home-correlation-pulse">
+            <div class="home-correlation-empty">Correlation matrix will populate after the first scan.</div>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <header class="home-section-head home-section-head-tight">
+            <div>
+              <h2 class="home-subdisplay">Weekly insights.</h2>
+              <p class="home-subdisplay-caption">What worked, what did not, and where to lean next week.</p>
+            </div>
+            <button id="home-insights-run" class="home-insights-btn" onclick="home_runInsights()">Mine the week</button>
+          </header>
+          <div id="home-insights-body" class="home-insights-body">
+            <div class="home-insights-empty">Press <em>Mine the week</em> to surface this week's pattern read. Needs at least ten closed Lumen trades.</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ══ SECTION: LAUNCH + TODAY'S PERFORMANCE ══ -->
+      <section class="home-section home-twocol">
+
+        <div class="home-col home-col-wide">
+          <header class="home-section-head home-section-head-tight">
+            <div>
+              <h2 class="home-subdisplay">Launch.</h2>
+              <p class="home-subdisplay-caption">One click into a working tool.</p>
+            </div>
+          </header>
+          <div class="home-launch-grid">
+            <button class="home-launch-btn" onclick="navigate('autotrader',null);setTimeout(function(){var b=document.getElementById('scalp-start-btn');if(b&amp;&amp;b.textContent.indexOf('SCALP')!==-1)b.click();},400);">
+              <span class="home-launch-eyebrow">Scalp</span>
+              <span class="home-launch-title">Sixty second engine</span>
+              <span class="home-launch-caption">Multi instrument scanning on a one minute cadence.</span>
+            </button>
+            <button class="home-launch-btn" onclick="navigate('autotrader',null);setTimeout(function(){var b=document.getElementById('at-start-btn');if(b)b.click();},400);">
+              <span class="home-launch-eyebrow">Intraday</span>
+              <span class="home-launch-title">Thirty minute engine</span>
+              <span class="home-launch-caption">Layered intelligence across three picks per session.</span>
+            </button>
+            <button class="home-launch-btn" onclick="navigate('markets',null);setTimeout(function(){if(typeof marketSubTab==='function')marketSubTab('scan',null);setTimeout(function(){var b=document.getElementById('scan-btn');if(b)b.click();},200);},400);">
+              <span class="home-launch-eyebrow">Markets</span>
+              <span class="home-launch-title">Run a fresh scan</span>
+              <span class="home-launch-caption">Sentiment, COT and macro framing across the universe.</span>
+            </button>
+            <button class="home-launch-btn" onclick="navigate('academy',document.querySelector('.nav-item[onclick*=academy]'));">
+              <span class="home-launch-eyebrow">Academy</span>
+              <span class="home-launch-title">Continue training</span>
+              <span class="home-launch-caption">Stage progression and graded simulation.</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="home-col">
+          <header class="home-section-head home-section-head-tight">
+            <div>
+              <h2 class="home-subdisplay">Today.</h2>
+              <p class="home-subdisplay-caption">Closed scalp results since the day rolled over.</p>
+            </div>
+          </header>
+          <div class="home-perf">
+            <div class="home-perf-row">
+              <span class="home-perf-label">Trades</span>
+              <span id="home-perf-trades" class="home-perf-value">0</span>
+            </div>
+            <div class="home-perf-row">
+              <span class="home-perf-label">Win rate</span>
+              <span id="home-perf-wr" class="home-perf-value">0%</span>
+            </div>
+            <div class="home-perf-row">
+              <span class="home-perf-label">Net P and L</span>
+              <span id="home-perf-pnl" class="home-perf-value">$0</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ══ INSTINCT QUOTE ══ -->
+      <section class="home-instinct">
+        <span class="home-instinct-eyebrow">Marktrader is reading the tape</span>
+        <p id="home-instinct-text" class="home-instinct-text">Marktrader is watching the markets. Start the Scalp Engine to activate live intelligence.</p>
+      </section>
+
+      <!-- ══ LEGAL FOOTER ══ -->
+      <footer class="home-footer">
+        <p class="home-footer-body">Marktrader is a trading education platform provided by Aperintel. This is not financial advice. Simulated performance does not represent real trading results. Marktrader is not regulated by any financial authority.</p>
+        <div class="home-footer-row">
+          <button onclick="openLegalModal('privacy')" class="home-footer-link">Privacy Policy</button>
+          <span class="home-footer-sep">·</span>
+          <button onclick="openLegalModal('terms')" class="home-footer-link">Terms of Use</button>
+          <span class="home-footer-copy">Copyright 2026 Aperintel</span>
+        </div>
+      </footer>
+
+    </div><!-- /tab-home -->
