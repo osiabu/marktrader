@@ -2,7 +2,7 @@
 
 Marktrader is a self-hosted financial markets trading intelligence tool that pairs a browser-native trading interface with **Lumen**, a market intelligence engine running two independent decision loops: an Intraday loop that scans on a thirty-minute cadence for swing and structural trades, and a Scalper loop that scans on a sixty-second cadence for short-horizon entries. The intelligence engine sits behind Vercel API routes with a server-side multi-provider fallback chain so the engines stay alive when one provider is down, and the front end is a pure browser application that runs without a build step beyond a static deploy.
 
-`Status: Live at marktrader.vercel.app · Phase 2 in development · Last updated: 2026-05-11 (rebrand from Wingman complete)`
+`Status: Live at marktrader.vercel.app · Phase 2 in development · Last updated: 2026-05-17 (Phase 3 of the gateway shipped; Marktrader Gemini fallback wiring next)`
 
 ## Two engines, one tab
 
