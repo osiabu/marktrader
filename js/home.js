@@ -206,9 +206,19 @@ function home_refreshIntelSnapshot() {
     }
   }
 
-  grid.innerHTML = picks.map(function (inst) {
+  // Two identical copies of the cards so the marquee can translate -50% and
+  // line the second copy up where the first started — a true seamless loop.
+  // The track element is reused across refreshes so the CSS animation keeps
+  // its phase instead of restarting every 15 seconds.
+  var seq = picks.map(function (inst) {
     return home_renderIntelCard(inst, todayActive);
   }).join('');
+  var track = grid.querySelector('.home-intel-track');
+  if (!track) {
+    grid.innerHTML = '<div class="home-intel-track"></div>';
+    track = grid.querySelector('.home-intel-track');
+  }
+  track.innerHTML = seq + seq;
 
   // Trigger background warm up of cached intel for these instruments.
   picks.forEach(function (inst) {

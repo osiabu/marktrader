@@ -284,15 +284,27 @@
   max-width: 540px;
 }
 
-/* ── INTELLIGENCE SNAPSHOT GRID ─────────────────────────────────────── */
+/* ── INTELLIGENCE SNAPSHOT MARQUEE ──────────────────────────────────── */
 
 .home-intel-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 40px, #000 calc(100% - 40px), transparent 100%);
 }
+.home-intel-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 90s linear infinite;
+  will-change: transform;
+}
+.home-intel-track:hover { animation-play-state: paused; }
 .home-intel-card {
   position: relative;
+  flex: 0 0 340px;
+  width: 340px;
+  margin-right: 16px;
   background: linear-gradient(180deg, rgba(17,17,22,0.85), rgba(12,12,16,0.85));
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1013,7 +1025,6 @@
 /* ── RESPONSIVE ────────────────────────────────────────────────────── */
 
 @media (max-width: 1080px) {
-  .home-intel-grid { grid-template-columns: 1fr 1fr; }
   .home-twocol { grid-template-columns: 1fr; gap: 32px; }
   .home-launch-grid { grid-template-columns: 1fr 1fr; }
   .home-status { flex-wrap: wrap; }
@@ -1029,7 +1040,7 @@
 }
 @media (max-width: 720px) {
   #tab-home { padding: 14px 12px 24px; }
-  .home-intel-grid { grid-template-columns: 1fr; gap: 10px; }
+  .home-intel-card { flex-basis: 280px; width: 280px; margin-right: 12px; min-height: 300px; padding: 18px 18px 16px; }
   .home-launch-grid { grid-template-columns: 1fr; gap: 10px; }
   .home-display { font-size: 24px; line-height: 1.15; }
   .home-subdisplay { font-size: 17px; }
