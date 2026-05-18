@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Gemini API key not configured' });
   }
 
-  const model = req.query.model || 'gemini-2.5-flash';
+  const model = req.query.model || 'gemini-2.5-pro';
 
   try {
     const upstream = await fetch(
