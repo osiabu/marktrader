@@ -43,6 +43,8 @@ var atEngineRunning   = false;
 var atScanTimer       = null;
 var atUiTimer         = null;
 var atBinanceWs       = null;
+var atWsRetries       = 0;
+var atWsReconnectTimer = null;
 var atCurrentPrice    = null;
 var atPrevClose       = null;
 var atCurrentInst     = 'BTCUSD';
@@ -583,11 +585,24 @@ function atSetWsDot(state) {
 }
 
 // ── BINANCE WEBSOCKET (chart price display only) ────────────────────────────
-function atInitBinanceWs() {
-  if (atBinanceWs) atBinanceWs.close();
+// Reconnects with capped exponential backoff. After atWsMaxRetries failed
+// attempts it stops retrying and rests in a stable OFFLINE state, so the dot
+// no longer flaps between LIVE and OFFLINE when the Binance stream is blocked
+// or unreachable (a common case on UK networks). The dot stays clickable to
+// trigger a manual reconnect, which resets the retry counter.
+var atWsMaxRetries = 5;
+function atInitBinanceWs(isManual) {
+  if (isManual) atWsRetries = 0;
+  if (atWsReconnectTimer) { clearTimeout(atWsReconnectTimer); atWsReconnectTimer = null; }
+  // Detach handlers before closing so the old socket's onclose cannot queue
+  // its own reconnect and stack overlapping connection attempts.
+  if (atBinanceWs) {
+    atBinanceWs.onopen = atBinanceWs.onmessage = atBinanceWs.onerror = atBinanceWs.onclose = null;
+    try { atBinanceWs.close(); } catch (_) {}
+  }
   atSetWsDot('reconnecting');
   atBinanceWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
-  atBinanceWs.onopen = function () { atSetWsDot('connected'); };
+  atBinanceWs.onopen = function () { atWsRetries = 0; atSetWsDot('connected'); };
   atBinanceWs.onmessage = function (e) {
     var data = JSON.parse(e.data);
     atPrevClose = atCurrentPrice;
@@ -596,7 +611,10 @@ function atInitBinanceWs() {
   atBinanceWs.onerror = function () { atSetWsDot('disconnected'); };
   atBinanceWs.onclose = function () {
     atSetWsDot('disconnected');
-    setTimeout(atInitBinanceWs, 5000);
+    if (atWsRetries >= atWsMaxRetries) return;  // give up; manual click resets
+    atWsRetries += 1;
+    var delay = Math.min(30000, 5000 * Math.pow(2, atWsRetries - 1));
+    atWsReconnectTimer = setTimeout(atInitBinanceWs, delay);
   };
 }
 
@@ -814,7 +832,7 @@ function atInjectWsDot() {
   var wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
   wrap.innerHTML =
-    '<div id="at-ws-dot" class="ws-dot disconnected" title="Binance WebSocket status. Click to reconnect." onclick="atInitBinanceWs()"></div>' +
+    '<div id="at-ws-dot" class="ws-dot disconnected" title="Binance WebSocket status. Click to reconnect." onclick="atInitBinanceWs(true)"></div>' +
     '<span id="at-ws-label" style="font-family:var(--font-mono);font-size:7px;letter-spacing:1px;color:var(--text4);">OFFLINE</span>';
   topbar.insertBefore(wrap, topbar.children[1] || null);
 }
