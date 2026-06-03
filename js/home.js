@@ -190,6 +190,102 @@ function home_pickWatchInstruments() {
   return HOME_DEFAULT_WATCH.slice();
 }
 
+// ── Stream-native day stats, tick buffer and momentum (no external API) ──────
+var _homeTickBuf = {};   // inst -> [{ t, p }] recent samples for momentum
+
+function home_dayKey(inst) {
+  var d = new Date();
+  return 'wm_home_day_' + inst + '_' + d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1) + '-' + d.getUTCDate();
+}
+
+// Returns { open, hi, lo } for the current UTC day. When a price is passed it
+// also updates the high and low. A new UTC day starts a fresh record because
+// the key carries the date, so yesterday's open never leaks into today.
+function home_dayStats(inst, price) {
+  var key = home_dayKey(inst);
+  var rec = null;
+  try { var raw = localStorage.getItem(key); rec = raw ? JSON.parse(raw) : null; } catch (_) { rec = null; }
+  if (price == null || isNaN(price)) return (rec && typeof rec === 'object') ? rec : null;
+  if (!rec || typeof rec !== 'object') {
+    rec = { open: price, hi: price, lo: price };
+  } else {
+    if (price > rec.hi) rec.hi = price;
+    if (price < rec.lo) rec.lo = price;
+  }
+  try { localStorage.setItem(key, JSON.stringify(rec)); } catch (_) {}
+  return rec;
+}
+
+function home_sampleTicks() {
+  var picks = home_pickWatchInstruments();
+  var now = Date.now();
+  var live = (typeof livePriceCache !== 'undefined') ? livePriceCache : {};
+  picks.forEach(function (inst) {
+    var p = live[inst];
+    if (p == null || isNaN(p)) return;
+    home_dayStats(inst, p);
+    var buf = _homeTickBuf[inst] || (_homeTickBuf[inst] = []);
+    buf.push({ t: now, p: p });
+    var cutoff = now - 120000;   // keep the last two minutes
+    while (buf.length && buf[0].t < cutoff) buf.shift();
+    if (buf.length > 60) buf.splice(0, buf.length - 60);
+  });
+}
+
+// Momentum over roughly the last sixty seconds, from the in-memory tick buffer.
+function home_momentum(inst) {
+  var buf = _homeTickBuf[inst];
+  if (!buf || buf.length < 2) return null;
+  var last = buf[buf.length - 1];
+  var target = last.t - 60000;
+  var ref = buf[0];
+  for (var i = 0; i < buf.length; i++) { if (buf[i].t <= target) ref = buf[i]; else break; }
+  return { delta: last.p - ref.p, secs: Math.max(1, Math.round((last.t - ref.t) / 1000)), samples: buf.length };
+}
+
+// Global strip: behaviour score and sim account, both from local data only.
+function home_refreshTraderStrip() {
+  var el = document.getElementById('home-trader-strip');
+  if (!el) return;
+  var cardStyle = 'flex:1;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;';
+  var labelStyle = 'font-family:var(--font-mono);font-size:8px;letter-spacing:1.5px;color:var(--text4);margin-bottom:4px;';
+  var mainStyle = "font-family:'Inter',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.03em;";
+  var subStyle = 'font-size:11px;color:var(--text3);font-weight:600;';
+  var metaStyle = 'font-family:var(--font-mono);font-size:9px;color:var(--text4);margin-top:3px;';
+  var html = '';
+
+  var beh = (typeof calcBehaviourScore === 'function') ? calcBehaviourScore(7) : null;
+  if (beh) {
+    var bCol = beh.score >= 80 ? 'var(--green)' : beh.score >= 60 ? 'var(--blue)' : beh.score >= 40 ? 'var(--gold)' : 'var(--red)';
+    var bArr = beh.trend === 'UP' ? '▲' : beh.trend === 'DOWN' ? '▼' : '◉';
+    var flag = beh.topFlag ? ('last flag ' + String(beh.topFlag).toLowerCase().replace(/_/g, ' ')) : 'no flags in 7d';
+    html += '<div style="' + cardStyle + '">'
+      + '<div style="' + labelStyle + '">BEHAVIOUR</div>'
+      + '<div style="' + mainStyle + 'color:' + bCol + ';">' + beh.score
+        + '<span style="' + subStyle + '">/100</span> <span style="' + subStyle + '">' + beh.label + ' ' + bArr + '</span></div>'
+      + '<div style="' + metaStyle + '">' + flag + '</div>'
+      + '</div>';
+  }
+
+  if (typeof simAccount !== 'undefined' && simAccount) {
+    var pos = home_collectPositions();
+    var openPnl = pos.reduce(function (a, r) { return a + (r.pnl || 0); }, 0);
+    var equity = (simAccount.balance || 0) + openPnl;
+    var peak = simAccount.peakBalance || simAccount.startBalance || simAccount.balance || 0;
+    var dd = peak > 0 ? Math.max(0, (peak - (simAccount.balance || 0)) / peak * 100) : 0;
+    var pCol = openPnl > 0 ? 'var(--green)' : openPnl < 0 ? 'var(--red)' : 'var(--text3)';
+    html += '<div style="' + cardStyle + '">'
+      + '<div style="' + labelStyle + '">SIM ACCOUNT</div>'
+      + '<div style="' + mainStyle + 'color:var(--text);">$' + equity.toLocaleString(undefined, { maximumFractionDigits: 0 })
+        + '<span style="' + subStyle + '"> equity</span></div>'
+      + '<div style="' + metaStyle + '">open <span style="color:' + pCol + ';">' + (openPnl >= 0 ? '+' : '-') + '$' + Math.abs(openPnl).toFixed(2) + '</span>'
+        + ' · ' + pos.length + ' open · DD ' + dd.toFixed(1) + '%</div>'
+      + '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
 function home_refreshIntelSnapshot() {
   var grid = document.getElementById('home-intel-grid');
   if (!grid) return;
@@ -220,13 +316,13 @@ function home_refreshIntelSnapshot() {
   }
   track.innerHTML = seq + seq;
 
-  // Trigger background warm up of cached intel for these instruments.
-  picks.forEach(function (inst) {
-    if (window.LumenIntel) {
-      try { window.LumenIntel.regime    && window.LumenIntel.regime(inst).catch(function () {}); } catch (_) {}
-      try { window.LumenIntel.liquidity && window.LumenIntel.liquidity(inst).catch(function () {}); } catch (_) {}
-    }
-  });
+  // Sample the live price stream so day stats and momentum stay current. This
+  // is the whole data source for the cards now: the old phase, regime, COT,
+  // real-yields and liquidity feeds were removed because they depended on
+  // rate-limited Twelve Data, CFTC and FRED endpoints and sat permanently at
+  // "Not yet read". Everything here comes from the price stream and your own
+  // local data, so the cards cannot go stale the same way.
+  home_sampleTicks();
 }
 
 function home_renderIntelCard(inst, todayActive) {
@@ -237,92 +333,70 @@ function home_renderIntelCard(inst, todayActive) {
     ? (home_formatPrice(price, inst) + (priceStale ? '<span title="Last working day close" style="font-size:9px;color:var(--text4);margin-left:6px;letter-spacing:1px;font-weight:500;">CLOSED</span>' : ''))
     : 'Awaiting feed';
 
-  // Cached intel (do not trigger fetches)
-  var wy = (window.LumenIntel && window.LumenIntel.wyckoff && window.LumenIntel.wyckoff.cached(inst)) || null;
-  var rg = (window.LumenIntel && window.LumenIntel.regime  && window.LumenIntel.regime.cached(inst))  || null;
-  var lq = (window.LumenIntel && window.LumenIntel.liquidity && window.LumenIntel.liquidity.cached(inst)) || null;
-  var cotKey = HOME_COT_KEY[inst];
-  var ct = null;
-  if (cotKey && window.LumenIntel && window.LumenIntel.cot && window.LumenIntel.cot.cached) {
-    try { ct = window.LumenIntel.cot.cached(cotKey); } catch (_) {}
-  }
-  var ry = (inst === 'XAUUSD' && window.LumenIntel && window.LumenIntel.yields && window.LumenIntel.yields.cached) ? window.LumenIntel.yields.cached() : null;
+  // Stream-native intel. Everything below comes from the live price stream
+  // (today's move, momentum, day range) plus the LLM-free session module. No
+  // candle or macro API, so these rows cannot freeze at "Not yet read".
+  var ds = home_dayStats(inst, price);
+  var mom = home_momentum(inst);
   var sess = (window.LumenIntel && window.LumenIntel.session) ? window.LumenIntel.session() : null;
 
-  // Top stripe direction
-  var stripeClass = '';
-  if (todayActive) stripeClass = 'is-active';
-  if (rg && rg.trend_character) {
-    var tc = String(rg.trend_character).toLowerCase();
-    if (tc.indexOf('bull') !== -1 || tc.indexOf('uptrend') !== -1) stripeClass = 'is-bullish';
-    else if (tc.indexOf('bear') !== -1 || tc.indexOf('downtrend') !== -1) stripeClass = 'is-bearish';
-  }
+  // Top stripe direction from today's move.
+  var dayChg = (ds && ds.open && price != null) ? (price - ds.open) : null;
+  var stripeClass = todayActive ? 'is-active' : '';
+  if (dayChg != null && dayChg > 0) stripeClass = 'is-bullish';
+  else if (dayChg != null && dayChg < 0) stripeClass = 'is-bearish';
 
   var rows = '';
 
-  // Phase
-  if (wy && wy.phase) {
-    var sub = wy.sub_phase ? '<span class="qual">' + wy.sub_phase + '</span>' : '';
-    rows += home_intelRow('Phase', '<strong>' + wy.phase + '</strong>' + sub);
+  // Today's move versus the captured session open.
+  if (dayChg != null && ds.open) {
+    var pct = (dayChg / ds.open) * 100;
+    var dCol = dayChg > 0 ? 'var(--green)' : dayChg < 0 ? 'var(--red)' : 'var(--text3)';
+    var dArr = dayChg > 0 ? '▲' : dayChg < 0 ? '▼' : '◉';
+    rows += home_intelRow('Today',
+      '<strong style="color:' + dCol + ';">' + (dayChg >= 0 ? '+' : '') + pct.toFixed(2) + '%</strong>'
+      + '<span class="qual" style="color:' + dCol + ';margin-left:6px;">' + dArr + ' ' + (dayChg >= 0 ? '+' : '-') + home_formatPrice(Math.abs(dayChg), inst) + '</span>');
   } else {
-    rows += home_intelRow('Phase', '<span style="color:var(--text4);">Not yet read</span>');
+    rows += home_intelRow('Today', '<span style="color:var(--text4);">opening reference warming</span>');
   }
 
-  // Regime
-  if (rg && rg.regime_label) {
-    rows += home_intelRow('Regime', '<strong>' + rg.regime_label + '</strong>');
+  // Short-window momentum from the tick buffer.
+  if (mom && mom.samples >= 2) {
+    var mCol = mom.delta > 0 ? 'var(--green)' : mom.delta < 0 ? 'var(--red)' : 'var(--text3)';
+    var mTxt = mom.delta > 0 ? '▲ rising' : mom.delta < 0 ? '▼ falling' : '◉ flat';
+    rows += home_intelRow('Momentum',
+      '<strong style="color:' + mCol + ';">' + mTxt + '</strong>'
+      + '<span class="qual">' + mom.secs + 's ' + (mom.delta >= 0 ? '+' : '-') + home_formatPrice(Math.abs(mom.delta), inst) + '</span>');
   } else {
-    rows += home_intelRow('Regime', '<span style="color:var(--text4);">Not yet read</span>');
+    rows += home_intelRow('Momentum', '<span style="color:var(--text4);">reading the tape</span>');
   }
 
-  // COT bias
-  if (ct && ct.cot_bias) {
-    var biasClass = ct.cot_bias.indexOf('bull') !== -1 ? 'bullish' : ct.cot_bias.indexOf('bear') !== -1 ? 'bearish' : 'neutral';
-    rows += home_intelRow('COT positioning', '<span class="home-intel-bias ' + biasClass + '">' + ct.cot_bias + '</span>');
-  } else if (cotKey) {
-    rows += home_intelRow('COT positioning', '<span style="color:var(--text4);">Awaiting weekly read</span>');
-  }
-
-  // Real yields (gold only)
-  if (inst === 'XAUUSD') {
-    if (ry && ry.level_classification && ry.level_classification !== 'unknown') {
-      var arrow = ry.direction_20d === 'rising' ? '▲' : ry.direction_20d === 'falling' ? '▼' : '◉';
-      var dirCol = ry.direction_20d === 'rising' ? 'var(--red)' : ry.direction_20d === 'falling' ? 'var(--green)' : 'var(--text3)';
-      rows += home_intelRow('Real yields', '<strong>' + ry.level_classification + '</strong>'
-        + '<span class="qual" style="color:' + dirCol + ';margin-left:6px;">' + arrow + ' ' + (ry.direction_20d || 'flat') + '</span>');
-    } else {
-      rows += home_intelRow('Real yields', '<span style="color:var(--text4);">Awaiting macro feed</span>');
-    }
-  }
-
-  // Session multiplier
+  // Session multiplier (LLM-free time module, already reliable).
   if (sess && sess.primary_session) {
     var mult = sess.signal_confidence_multiplier;
     rows += home_intelRow('Session', '<strong>' + sess.primary_session + '</strong>'
       + '<span class="qual">x ' + (mult != null ? mult.toFixed(2) : '1.00') + '</span>');
   }
 
-  // Liquidity zones
+  // Day range position: where price sits between today's low and high.
   var liq = '';
-  if (lq && (lq.nearest_above || lq.nearest_below)) {
-    var above = (lq.nearest_above || []).slice(0, 2);
-    var below = (lq.nearest_below || []).slice(0, 2);
-    above.reverse().forEach(function (lvl) {
-      liq += '<div class="home-intel-liq-row above">'
-        + '<span class="home-intel-liq-arrow">▲</span>'
-        + '<span class="home-intel-liq-price">' + home_formatPrice(lvl.price, inst) + '</span>'
-        + '<span class="home-intel-liq-meta">' + (lvl.weight != null ? Math.round(lvl.weight) + ' wt' : '') + '</span>'
-        + '</div>';
-    });
-    below.forEach(function (lvl) {
-      liq += '<div class="home-intel-liq-row below">'
-        + '<span class="home-intel-liq-arrow">▼</span>'
-        + '<span class="home-intel-liq-price">' + home_formatPrice(lvl.price, inst) + '</span>'
-        + '<span class="home-intel-liq-meta">' + (lvl.weight != null ? Math.round(lvl.weight) + ' wt' : '') + '</span>'
-        + '</div>';
-    });
+  if (ds && ds.hi != null && ds.lo != null && ds.hi > ds.lo && price != null) {
+    var posPct = Math.max(0, Math.min(100, ((price - ds.lo) / (ds.hi - ds.lo)) * 100));
+    liq = '<div class="home-intel-range">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+        + '<span style="font-family:var(--font-mono);font-size:8px;color:var(--text4);letter-spacing:1px;">DAY RANGE</span>'
+        + '<span style="font-family:var(--font-mono);font-size:9px;color:var(--text3);">' + Math.round(posPct) + '%</span>'
+      + '</div>'
+      + '<div style="height:5px;background:var(--bg3);border-radius:3px;margin-top:4px;position:relative;">'
+        + '<div style="position:absolute;left:' + posPct.toFixed(1) + '%;top:-1px;width:3px;height:7px;background:var(--gold);border-radius:1px;transform:translateX(-50%);"></div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;margin-top:3px;font-family:var(--font-mono);font-size:8px;color:var(--text4);">'
+        + '<span>L ' + home_formatPrice(ds.lo, inst) + '</span>'
+        + '<span>H ' + home_formatPrice(ds.hi, inst) + '</span>'
+      + '</div>'
+      + '</div>';
   } else {
-    liq = '<div class="home-intel-card-empty">Liquidity map will populate once price stream warms up.</div>';
+    liq = '<div class="home-intel-card-empty">Day range builds as price ticks in.</div>';
   }
 
   return '<article class="home-intel-card ' + stripeClass + '">'
@@ -676,7 +750,9 @@ function home_init() {
   home_tickClock();
   home_startTickerInterval();
   home_refreshStatusStrip();
+  home_sampleTicks();
   home_refreshIntelSnapshot();
+  home_refreshTraderStrip();
   home_refreshLedger();
   home_refreshCalendarStrip();
   home_refreshActivityFeed();
@@ -691,6 +767,7 @@ function home_init() {
   // Fast cadence (3s): ledger and activity feed track the live engines.
   if (!_homeFastTimer) _homeFastTimer = setInterval(function () {
     if (document.visibilityState === 'hidden') return;
+    home_sampleTicks();
     home_refreshLedger();
     home_refreshActivityFeed();
   }, 3000);
@@ -700,6 +777,7 @@ function home_init() {
     if (document.visibilityState === 'hidden') return;
     home_refreshStatusStrip();
     home_refreshIntelSnapshot();
+    home_refreshTraderStrip();
     home_refreshCalendarStrip();
     home_refreshCorrelationPulse();
   }, 15000);
