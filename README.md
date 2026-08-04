@@ -91,4 +91,4 @@ For a pure front-end pass without the API layer (the engines will not be able to
 
 ---
 
-Osi Abu, Aperintel · [osiabu.vercel.app](https://osiabu.vercel.app)
+Osi Abu, Aperintelligence · [osiabu.vercel.app](https://osiabu.vercel.app)
